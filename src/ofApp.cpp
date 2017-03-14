@@ -1,8 +1,10 @@
 #include "ofApp.h"
 
+#include "SpatialHashTable.hpp"
 //--------------------------------------------------------------
 void ofApp::setup(){
-
+	SpatialHashTable<int> sht;
+	sht.testHash();
 }
 
 //--------------------------------------------------------------

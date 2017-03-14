@@ -2,7 +2,6 @@
 
 #include "ofMain.h"
 #include "SPHFluid.hpp"
-
 class ofApp : public ofBaseApp{
 
 	public:

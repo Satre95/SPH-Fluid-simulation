@@ -13,11 +13,13 @@ public:
 
 	void insert(ofVec3f position, T & value);
 	void remove(ofVec3f position);
+
+	void testHash();
 private:
 	typedef long HashKey;
-	HashKey hashPosition(ofVec3f position);
+	typename SpatialHashTable<T>::HashKey hashPosition(ofVec3f position);
 
-	const ofVec3f LARGE_PRIMES(73856093, 19349663, 83492791);
+	const ofVec3f PRIMES(73856093, 19349663, 83492791);
 	int binSize;
 	int numBins;
 	std::unordered_map<HashKey, std::list<T>> bins;
@@ -67,10 +69,19 @@ void SpatialHashTable<T>::remove(ofVec3f position) {
 }
 
 template<typename T>
-SpatialHashTable::HashKey SpatialHashTable<T>::hashPosition(ofVec3f position) {
-	HashKey part1 = std::floor(position.x / binSize) *	LARGE_PRIMES.x;
-	HashKey part2 = std::floor(position.y / binSize) * LARGE_PRIMES.y;
-	HashKey part3 = std::floor(position.z / binSize) * LARGE_PRIMES.z;
+typename SpatialHashTable<T>::HashKey SpatialHashTable<T>::hashPosition(ofVec3f position) {
+	HashKey part1 = std::floor(position.x / binSize) * PRIMES.x;
+	HashKey part2 = std::floor(position.y / binSize) * PRIMES.y;
+	HashKey part3 = std::floor(position.z / binSize) * PRIMES.z;
 
 	return (part1 ^ part2 ^ part3) % numBins;
+}
+
+template<typename T>
+void SpatialHashTable<T>::testHash() {
+	for (size_t i = 0; i < 12; i++)
+	{
+		ofVec3f randPos(ofRandom(100), ofRandom(100), ofRandom(100));
+		ofLogNotice() << "Position: " << randpos << " hashed to key: " << hashPosition;
+	}
 }
