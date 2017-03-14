@@ -3,6 +3,7 @@
 #include "ofMain.h"
 #include <unordered_map>
 #include <list>
+#include <vector>
 
 template <typename T>
 class SpatialHashTable
@@ -17,9 +18,9 @@ public:
 	void testHash();
 private:
 	typedef long HashKey;
-	typename SpatialHashTable<T>::HashKey hashPosition(ofVec3f position);
+	SpatialHashTable<T>::HashKey hashPosition(ofVec3f position);
 
-	const ofVec3f PRIMES(73856093, 19349663, 83492791);
+	const ofVec3f PRIMES = ofVec3f(73856093, 19349663, 83492791);
 	int binSize;
 	int numBins;
 	std::unordered_map<HashKey, std::list<T>> bins;
@@ -79,9 +80,14 @@ typename SpatialHashTable<T>::HashKey SpatialHashTable<T>::hashPosition(ofVec3f 
 
 template<typename T>
 void SpatialHashTable<T>::testHash() {
-	for (size_t i = 0; i < 12; i++)
+    std::vector<HashKey> hashes;
+	for (size_t i = 0; i < 100; i++)
 	{
-		ofVec3f randPos(ofRandom(100), ofRandom(100), ofRandom(100));
-		ofLogNotice() << "Position: " << randpos << " hashed to key: " << hashPosition;
+        //All the positions should hash to the same value, since they are within one binSize
+        ofVec3f randPos(ofRandom(binSize), ofRandom(binSize), ofRandom(binSize));
+        hashes.push_back(hashPosition(randPos));
+        if(hashes.at(i) != (long)0)
+            ofLogNotice() << "ERROR: Position " << randPos << " hashed to key: " << hashes.at(i)
+            << "\nInstead of key 0";
 	}
 }
