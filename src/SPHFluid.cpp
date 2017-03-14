@@ -1,4 +1,4 @@
 #include "SPHFluid.hpp"
 
-SPHFluid::SPHFluid() : buckets(SpatialHashTable<SPHParticle*>(5, 500))
+SPHFluid::SPHFluid() : buckets(SpatialHashTable<SPHParticle*>(5, 1000))
 {}

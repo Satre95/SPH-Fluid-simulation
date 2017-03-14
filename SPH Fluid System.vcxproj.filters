@@ -37,6 +37,9 @@
     <ClCompile Include="..\..\..\addons\ofxGui\src\ofxToggle.cpp">
       <Filter>addons\ofxGui\src</Filter>
     </ClCompile>
+    <ClCompile Include="src\SPHFluid.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -87,6 +90,12 @@
       <Filter>addons\ofxGui\src</Filter>
     </ClInclude>
     <ClInclude Include="src\SpatialHashTable.hpp">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SPHFluid.hpp">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SPHParticle.hpp">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
