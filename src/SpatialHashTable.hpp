@@ -12,8 +12,12 @@ public:
 	SpatialHashTable();
 	SpatialHashTable(int binSize, int numBins);
 
-	void insert(ofVec3f position, T & value);
-	void remove(ofVec3f position);
+	void insert(ofVec3f position, T && value);
+    void insert(ofVec3f position, T & value);
+	void remove(ofVec3f position, T & value);
+    void remove(ofVec3f position, T && value);
+    ///Ascertains whether the two positions hash to the same bin.
+    bool compareKeyHashes(ofVec3f pos1, ofVec3f pos2);
 
 	void testHash();
 private:
@@ -40,7 +44,7 @@ SpatialHashTable<T>::SpatialHashTable(int binSize, int numBins)
 }
 
 template<typename T>
-void SpatialHashTable<T>::insert(ofVec3f position, T & value) {
+void SpatialHashTable<T>::insert(ofVec3f position, T && value) {
 	//Get the hash key for the given position
 	HashKey key = hashPosition(position);
 
@@ -53,8 +57,22 @@ void SpatialHashTable<T>::insert(ofVec3f position, T & value) {
 	list.push_back(value);
 }
 
+template<typename T>
+void SpatialHashTable<T>::insert(ofVec3f position, T & value){
+    //Get the hash key for the given position
+    HashKey key = hashPosition(position);
+    
+    //if the bin that this position hashes to has not been used before, need to create it first.
+    if (bins.find(key) == bins.end())
+        bins.insert(std::make_pair(key, std::list<T>()));
+    
+    //Insert into the list at the given key
+    std::list<T> & list = bins.at(key);
+    list.push_back(value);
+}
+
 template <typename T>
-void SpatialHashTable<T>::remove(ofVec3f position) {
+void SpatialHashTable<T>::remove(ofVec3f position, T & value) {
 	//Get the hash key for the given position
 	HashKey key = hashPosition(position);
 
@@ -66,7 +84,23 @@ void SpatialHashTable<T>::remove(ofVec3f position) {
 	}
 
 	std::list<T> & items = bins.at(key);
-	items.remove(position);
+	items.remove(value);
+}
+
+template <typename T>
+void SpatialHashTable<T>::remove(ofVec3f position, T && value) {
+    //Get the hash key for the given position
+    HashKey key = hashPosition(position);
+    
+    //If the given position does not map to a slot in the map, return
+    if (bins.find(key) == bins.end()) {
+        std::cerr << "ERROR: Trying to remove item for position that is not stored in hash table" << std::endl;
+        std::cerr << "Offending Position: " << position << std::endl;
+        return;
+    }
+    
+    std::list<T> & items = bins.at(key);
+    items.remove(value);
 }
 
 template<typename T>
@@ -79,15 +113,6 @@ typename SpatialHashTable<T>::HashKey SpatialHashTable<T>::hashPosition(ofVec3f 
 }
 
 template<typename T>
-void SpatialHashTable<T>::testHash() {
-    std::vector<HashKey> hashes;
-	for (size_t i = 0; i < 100; i++)
-	{
-        //All the positions should hash to the same value, since they are within one binSize
-        ofVec3f randPos(ofRandom(binSize), ofRandom(binSize), ofRandom(binSize));
-        hashes.push_back(hashPosition(randPos));
-        if(hashes.at(i) != (long)0)
-            ofLogNotice() << "ERROR: Position " << randPos << " hashed to key: " << hashes.at(i)
-            << "\nInstead of key 0";
-	}
+bool SpatialHashTable<T>::compareKeyHashes(ofVec3f pos1, ofVec3f pos2) {
+    return hashPosition(pos1) == hashPosition(pos2);
 }
