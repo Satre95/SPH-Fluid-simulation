@@ -5,6 +5,7 @@
 #include <list>
 #include <vector>
 
+
 template <typename T>
 class SpatialHashTable
 {
@@ -18,6 +19,8 @@ public:
     void remove(ofVec3f position, T && value);
     ///Ascertains whether the two positions hash to the same bin.
     bool compareKeyHashes(ofVec3f pos1, ofVec3f pos2);
+    ///Function to iterate over all buckets and process the data inside them.
+    void updateDataInBuckets(const std::function< void( std::list<T> &)> f);
 
 	void testHash();
 private:
@@ -115,4 +118,11 @@ typename SpatialHashTable<T>::HashKey SpatialHashTable<T>::hashPosition(ofVec3f 
 template<typename T>
 bool SpatialHashTable<T>::compareKeyHashes(ofVec3f pos1, ofVec3f pos2) {
     return hashPosition(pos1) == hashPosition(pos2);
+}
+
+template <typename T>
+void SpatialHashTable<T>::updateDataInBuckets(const std::function< void( std::list<T> &)> f) {
+    for(auto itr = bins.begin(); itr != bins.end(); itr++) {
+        f(*itr);
+    }
 }
