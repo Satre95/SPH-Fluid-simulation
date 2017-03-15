@@ -16,7 +16,7 @@ public:
 
 	SPHFluid(int numParticles = 10000);
     const int numParticles;
-    const int binSize = SPHParticle::smoothingRadius;
+    const float binSize = SPHParticle::smoothingRadius;
     const int numBins = 10000;
     
     //--------------------------------------------
@@ -55,7 +55,7 @@ private:
 
     //--------------------------------------------
     //MARK: - Private Variables
-	SpatialHashTable<SPHParticle*> buckets;
+	SpatialHashTable<SPHParticle*> sht;
     std::vector<SPHParticle> particles;
     ofVbo particlesVbo;
     

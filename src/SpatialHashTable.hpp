@@ -10,7 +10,7 @@ class SpatialHashTable
 {
 public:
 	SpatialHashTable();
-	SpatialHashTable(int binSize, int numBins);
+	SpatialHashTable(float binSize, int numBins);
 
 	void insert(ofVec3f position, T && value);
     void insert(ofVec3f position, T & value);
@@ -25,7 +25,7 @@ private:
 	SpatialHashTable<T>::HashKey hashPosition(ofVec3f position);
 
 	const ofVec3f PRIMES = ofVec3f(73856093, 19349663, 83492791);
-	int binSize;
+	float binSize;
 	int numBins;
 	std::unordered_map<HashKey, std::list<T>> bins;
 };
@@ -37,7 +37,7 @@ SpatialHashTable<T>::SpatialHashTable()
 }
 
 template<typename T>
-SpatialHashTable<T>::SpatialHashTable(int binSize, int numBins)
+SpatialHashTable<T>::SpatialHashTable(float binSize, int numBins)
 {
 	this->binSize = binSize;
 	this->numBins = numBins;

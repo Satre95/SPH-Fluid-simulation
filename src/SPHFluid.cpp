@@ -3,7 +3,7 @@
 float SPHParticle::smoothingRadius = 0.025f;
 float SPHParticle::supportRadius = 2.0f * smoothingRadius;
 
-SPHFluid::SPHFluid(int num) : buckets(SpatialHashTable<SPHParticle*>(binSize, numBins)), numParticles(num)
+SPHFluid::SPHFluid(int num) : sht(SpatialHashTable<SPHParticle*>(binSize, numBins)), numParticles(num)
 {
     int particlesPerDim = std::floor(pow(numParticles, 1.0f/3.0f));
     
@@ -16,7 +16,11 @@ SPHFluid::SPHFluid(int num) : buckets(SpatialHashTable<SPHParticle*>(binSize, nu
                 float yDim = 2.0f * (float)y / (float)particlesPerDim;
                 float zDim = 2.0f * (float)z / (float)particlesPerDim;
                 particle.pos = ofVec3f(xDim, yDim, zDim);
+                particle.lastPos = particle.pos;
                 particles.push_back(particle);
+                //insert into the hash table.
+                SPHParticle * particlePtr = &particles.back();
+                sht.insert(particles.back().pos, particlePtr);
             }
         }
     }
@@ -101,7 +105,15 @@ void SPHFluid::updateVBO() {
 }
 
 void SPHFluid::updateSHT() {
-    
+    for(SPHParticle & aParticle: particles) {
+        //If the hashing the particles current pos does not hash
+        //to same key as the last pos, then the particles needs to be
+        //moved to a different bin.
+        if(!sht.compareKeyHashes(aParticle.lastPos, aParticle.pos)) {
+            sht.remove(aParticle.lastPos, &aParticle);
+            sht.insert(aParticle.pos, &aParticle);
+        }
+    }
 }
 
 void SPHFluid::updateParticleDensities() {
