@@ -12,6 +12,7 @@ class SPHFluid {
 public:
     
 	SPHFluid(int numParticles = 10000);
+    const int numParticles;
     const int binSize = SPHParticle::smoothingRadius;
     const int numBins = 10000;
     
@@ -24,9 +25,6 @@ public:
     void updateSHT();
 private:
 
-    
-
-    
     //--------------------------------------------
     //MARK: - Math fns.
     ///Del of kernel function.

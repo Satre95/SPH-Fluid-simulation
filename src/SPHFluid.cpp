@@ -3,7 +3,7 @@
 float SPHParticle::smoothingRadius = 0.025f;
 float SPHParticle::supportRadius = 2.0f * smoothingRadius;
 
-SPHFluid::SPHFluid(int numParticles) : buckets(SpatialHashTable<SPHParticle*>(binSize, numBins))
+SPHFluid::SPHFluid(int num) : buckets(SpatialHashTable<SPHParticle*>(binSize, numBins)), numParticles(num)
 {
     int particlesPerDim = std::floor(pow(numParticles, 1.0f/3.0f));
     
@@ -71,11 +71,22 @@ float SPHFluid::helperKernelFnDerivative(float q) {
 void SPHFluid::updateSHT() {
     //Extract positions
     vector<ofVec3f> positions(particles.size());
+    //Use colors as positions
+    vector<ofFloatColor> colors(particles.size());
+    
     for(int i = 0; i < particles.size(); i++) {
-        positions.at(i) = particles.at(i).pos;
+        SPHParticle & p = particles.at(i);
+        positions.at(i) = p.pos;
+        colors.at(i) = ofFloatColor(p.pos.x / 2.0f,
+                                    p.pos.y / 2.0f,
+                                    p.pos.z / 2.0f,
+                                    0.8f);
     }
     
+
+    
     particlesVbo.setVertexData(positions.data(), (int)positions.size(), GL_DYNAMIC_DRAW);
+    particlesVbo.setColorData(colors.data(), (int)colors.size(), GL_DYNAMIC_DRAW);
 }
 
 //--------------------------------------------------
