@@ -3,7 +3,7 @@
 #include "SpatialHashTable.hpp"
 //--------------------------------------------------------------
 void ofApp::setup(){
-    camera.setDistance(10.0f);
+    camera.setDistance(5.0f);
     camera.setNearClip(0.01f);
     camera.setFarClip(1000.0f);
 }
