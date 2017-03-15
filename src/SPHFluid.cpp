@@ -16,9 +16,12 @@ SPHFluid::SPHFluid(int numParticles) : buckets(SpatialHashTable<SPHParticle*>(bi
                 float yDim = 2.0f * (float)y / (float)particlesPerDim;
                 float zDim = 2.0f * (float)z / (float)particlesPerDim;
                 particle.pos = ofVec3f(xDim, yDim, zDim);
+                particles.push_back(particle);
             }
         }
     }
+    
+    
 }
 
 
@@ -61,4 +64,23 @@ float SPHFluid::helperKernelFnDerivative(float q) {
         return (3.0f / (2.0f * PI)) * (-0.5f * pow((2 - q), 2));
     else
         return 0.0f;
+}
+
+//--------------------------------------------------
+//MARK: - Update Functions
+void SPHFluid::updateSHT() {
+    //Extract positions
+    vector<ofVec3f> positions(particles.size());
+    for(int i = 0; i < particles.size(); i++) {
+        positions.at(i) = particles.at(i).pos;
+    }
+    
+    particlesVbo.setVertexData(positions.data(), (int)positions.size(), GL_DYNAMIC_DRAW);
+}
+
+//--------------------------------------------------
+//MARK: - Draw Functions
+void SPHFluid::drawParticles() {
+    glPointSize(2.0f);
+    particlesVbo.draw(GL_POINTS, 0, (int)particles.size());
 }

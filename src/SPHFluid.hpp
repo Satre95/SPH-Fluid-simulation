@@ -11,10 +11,24 @@ typedef float volume;
 class SPHFluid {
 public:
     
-	SPHFluid(int numParticles = 1000);
+	SPHFluid(int numParticles = 10000);
+    const int binSize = SPHParticle::smoothingRadius;
+    const int numBins = 10000;
     
+    //--------------------------------------------
+    //MARK: - Draw fns.
+    void drawParticles();
     
+    //--------------------------------------------
+    //MARK: - Update fns.
+    void updateSHT();
 private:
+
+    
+
+    
+    //--------------------------------------------
+    //MARK: - Math fns.
     ///Del of kernel function.
     ofVec3f gradientOfKernelFn(SPHParticle & p1, SPHParticle & p2);
     ///Kernel function
@@ -24,10 +38,11 @@ private:
     ///Helper method to calculate f'(q) for kernel function.
     float helperKernelFnDerivative(float dist);
 
-    
+    //--------------------------------------------
+    //MARK: - Private Variables
 	SpatialHashTable<SPHParticle*> buckets;
     std::vector<SPHParticle> particles;
-    
+    ofVbo particlesVbo;
     
  
 };

@@ -3,18 +3,21 @@
 #include "SpatialHashTable.hpp"
 //--------------------------------------------------------------
 void ofApp::setup(){
-	SpatialHashTable<int> sht;
-	sht.testHash();
+    camera.setDistance(10.0f);
+    camera.setNearClip(0.01f);
+    camera.setFarClip(1000.0f);
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
-
+    fluid.updateSHT();
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-
+    camera.begin();
+    fluid.drawParticles();
+    camera.end();
 }
 
 //--------------------------------------------------------------

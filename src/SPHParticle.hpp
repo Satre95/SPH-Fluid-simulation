@@ -4,6 +4,7 @@
 
 struct SPHParticle {
 	ofVec3f pos;
+    ofVec3f lastPos;
 	float mass;
 	ofVec3f vel;
 	float localDensity;
