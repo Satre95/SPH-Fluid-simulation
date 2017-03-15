@@ -26,7 +26,7 @@ public:
 //    void processDataInBuckets(const std::function< void( std::list<T> )> f);
     
     ///Function to return the bins represent the spaces near the given position, if any
-    std::vector<std::list<T>> getNeighboringBuckets(ofVec3f pos);
+    std::vector<std::reference_wrapper<std::list<T>>> getNeighboringBuckets(ofVec3f pos);
 private:
 	typedef long HashKey;
 	SpatialHashTable<T>::HashKey hashPosition(ofVec3f position);
@@ -151,8 +151,8 @@ std::list<T> * SpatialHashTable<T>::find(ofVec3f pos) {
 }
 
 template <typename T>
-std::vector<std::list<T>> SpatialHashTable<T>::getNeighboringBuckets(ofVec3f pos) {
-    vector<std::list<T>> lists;
+std::vector<std::reference_wrapper<std::list<T>>> SpatialHashTable<T>::getNeighboringBuckets(ofVec3f pos) {
+    vector<std::reference_wrapper<std::list<T>>> lists;
     
     //1. go over single dimensions
     //  1.a go over x dimension

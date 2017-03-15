@@ -12,11 +12,12 @@ void ofApp::setup(){
 //--------------------------------------------------------------
 void ofApp::update(){
     fluid.update();
-    std::cerr << "Framerate: " << ofGetFrameRate() << std::endl;
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
+    std::cerr << "Framerate: " << ofGetFrameRate() << std::endl;
+    
     camera.begin();
     fluid.drawParticles();
     camera.end();
