@@ -23,10 +23,10 @@ public:
     bool compareKeyHashes(ofVec3f pos1, ofVec3f pos2);
     
     ///Function to iterate over all bins and process the data inside them.
-    void processDataInBuckets(const std::function< void( std::list<T> &)> f);
+//    void processDataInBuckets(const std::function< void( std::list<T> )> f);
     
     ///Function to return the bins represent the spaces near the given position, if any
-    std::vector<std::reference_wrapper<std::list<T>>> getNeighboringBuckets(ofVec3f pos);
+    std::vector<std::list<T>> getNeighboringBuckets(ofVec3f pos);
 private:
 	typedef long HashKey;
 	SpatialHashTable<T>::HashKey hashPosition(ofVec3f position);
@@ -131,12 +131,12 @@ bool SpatialHashTable<T>::compareKeyHashes(ofVec3f pos1, ofVec3f pos2) {
     return hashPosition(pos1) == hashPosition(pos2);
 }
 
-template <typename T>
-void SpatialHashTable<T>::processDataInBuckets(const std::function< void( std::list<T> &)> f) {
-    for(auto itr = bins.begin(); itr != bins.end(); itr++) {
-        f(itr->second);
-    }
-}
+//template <typename T>
+//void SpatialHashTable<T>::processDataInBuckets(const std::function< void( std::list<T> )> f) {
+//    for(auto itr = bins.begin(); itr != bins.end(); itr++) {
+//        f(itr->second);
+//    }
+//}
 
 template <typename T>
 bool SpatialHashTable<T>::exists(ofVec3f position)
@@ -147,12 +147,12 @@ std::list<T> * SpatialHashTable<T>::find(ofVec3f pos) {
     if(bins.find(hashPosition(pos)) == bins.end())
         return nullptr;
     else
-        return &(*(bins.find(hashPosition(pos))));
+        return &(*(bins.find(hashPosition(pos)))).second;
 }
 
 template <typename T>
-std::vector<std::reference_wrapper<std::list<T>>> SpatialHashTable<T>::getNeighboringBuckets(ofVec3f pos) {
-    vector<std::reference_wrapper<std::list<T>>> lists;
+std::vector<std::list<T>> SpatialHashTable<T>::getNeighboringBuckets(ofVec3f pos) {
+    vector<std::list<T>> lists;
     
     //1. go over single dimensions
     //  1.a go over x dimension
@@ -205,6 +205,9 @@ std::vector<std::reference_wrapper<std::list<T>>> SpatialHashTable<T>::getNeighb
     planeDiag.z *= -1.0f;
     if(exists(pos + planeDiag)) lists.push_back(*find(pos + planeDiag));
     if(exists(pos - planeDiag)) lists.push_back(*find(pos - planeDiag));
+    
+    //4. Finally, add our bucket
+    if(exists(pos)) lists.push_back(*find(pos));
     
     return lists;
 }

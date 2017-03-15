@@ -3,6 +3,7 @@
 #include "SpatialHashTable.hpp"
 //--------------------------------------------------------------
 void ofApp::setup(){
+    ofSetFrameRate(60);
     camera.setDistance(5.0f);
     camera.setNearClip(0.01f);
     camera.setFarClip(1000.0f);
@@ -11,6 +12,7 @@ void ofApp::setup(){
 //--------------------------------------------------------------
 void ofApp::update(){
     fluid.update();
+    std::cerr << "Framerate: " << ofGetFrameRate() << std::endl;
 }
 
 //--------------------------------------------------------------
