@@ -23,7 +23,7 @@ public:
     bool compareKeyHashes(ofVec3f pos1, ofVec3f pos2);
     
     ///Function to iterate over all bins and process the data inside them.
-    void updateDataInBuckets(const std::function< void( std::list<T> &)> f);
+    void processDataInBuckets(const std::function< void( std::list<T> &)> f);
     
     ///Function to return the bins represent the spaces near the given position, if any
     std::vector<std::reference_wrapper<std::list<T>>> getNeighboringBuckets(ofVec3f pos);
@@ -132,7 +132,7 @@ bool SpatialHashTable<T>::compareKeyHashes(ofVec3f pos1, ofVec3f pos2) {
 }
 
 template <typename T>
-void SpatialHashTable<T>::updateDataInBuckets(const std::function< void( std::list<T> &)> f) {
+void SpatialHashTable<T>::processDataInBuckets(const std::function< void( std::list<T> &)> f) {
     for(auto itr = bins.begin(); itr != bins.end(); itr++) {
         f(itr->second);
     }
