@@ -3,11 +3,27 @@
 float SPHParticle::smoothingRadius = 0.025f;
 float SPHParticle::supportRadius = 2.0f * smoothingRadius;
 
-SPHFluid::SPHFluid(int numParticles) : buckets(SpatialHashTable<SPHParticle*>(5, 1000))
+SPHFluid::SPHFluid(int numParticles) : buckets(SpatialHashTable<SPHParticle*>(binSize, numBins))
 {
-    particles.reserve(numParticles);
+    int particlesPerDim = std::floor(pow(numParticles, 1.0f/3.0f));
+    
+    //Allocate the particles in a 2x2x2 cube that is at height 4
+    for (int z = 0; z < particlesPerDim; z++) {
+        for(int y = 0; y < particlesPerDim; y++) {
+            for( int x = 0; x < particlesPerDim; x++) {
+                SPHParticle particle;
+                float xDim = 2.0f * (float)x / (float)particlesPerDim;
+                float yDim = 2.0f * (float)y / (float)particlesPerDim;
+                float zDim = 2.0f * (float)z / (float)particlesPerDim;
+                particle.pos = ofVec3f(xDim, yDim, zDim);
+            }
+        }
+    }
 }
 
+
+//--------------------------------------------------
+//MARK: - Math Functions
 float SPHFluid::kernelFn(SPHParticle & p1, SPHParticle & p2) {
     ofVec3f pos1 = p1.pos;
     ofVec3f pos2 = p2.pos;
@@ -22,7 +38,6 @@ ofVec3f SPHFluid::gradientOfKernelFn(SPHParticle & p1, SPHParticle & p2) {
     float term1 = 1 / pow(SPHParticle::smoothingRadius, 3+1);
     float term2 = helperKernelFnDerivative(q) / q;
     return term1 * term2 * (pos1 - pos2);
-    
 }
 
 float SPHFluid::helperKernelFn(float q) {
