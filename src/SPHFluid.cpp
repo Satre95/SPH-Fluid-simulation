@@ -20,8 +20,6 @@ SPHFluid::SPHFluid(int num) : buckets(SpatialHashTable<SPHParticle*>(binSize, nu
             }
         }
     }
-    
-    
 }
 
 
@@ -68,7 +66,20 @@ float SPHFluid::helperKernelFnDerivative(float q) {
 
 //--------------------------------------------------
 //MARK: - Update Functions
-void SPHFluid::updateSHT() {
+void SPHFluid::update() {
+    //1. Update the position data in the hashTable.
+    updateSHT();
+    //2. Update the particle densities
+    updateParticleDensities();
+    //3. Compute and sum pressure, viscosity, and gravity forces
+    computeForces();
+    //4. Apply forces as acceleration and velocity.
+    applyForces();
+    //5. Update VBO for rendering.
+    updateVBO();
+}
+
+void SPHFluid::updateVBO() {
     //Extract positions
     vector<ofVec3f> positions(particles.size());
     //Use colors as positions
@@ -87,6 +98,22 @@ void SPHFluid::updateSHT() {
     
     particlesVbo.setVertexData(positions.data(), (int)positions.size(), GL_DYNAMIC_DRAW);
     particlesVbo.setColorData(colors.data(), (int)colors.size(), GL_DYNAMIC_DRAW);
+}
+
+void SPHFluid::updateSHT() {
+    
+}
+
+void SPHFluid::updateParticleDensities() {
+    
+}
+
+void SPHFluid::computeForces() {
+    
+}
+
+void SPHFluid::applyForces() {
+    
 }
 
 //--------------------------------------------------
