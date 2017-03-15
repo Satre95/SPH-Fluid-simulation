@@ -16,7 +16,11 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-    std::cerr << "Frame render time: " << ofGetLastFrameTime() << std::endl;
+//    std::cerr << "Frame render time: " << ofGetLastFrameTime() << std::endl;
+    stringstream ss;
+    ss << "Frame render time: ";
+    ss << ofGetLastFrameTime();
+    ofDrawBitmapString(ss.str(), 10, 10);
     
     camera.begin();
     fluid.drawParticles();
