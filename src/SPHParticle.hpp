@@ -14,9 +14,12 @@ struct SPHParticle {
 	ofVec3f pos;
     ofVec3f lastPos;
 	ofVec3f vel;
+    ofVec3f force;
+    
 	density localDensity;
 	volume localVolume;
 	pressure localPressure;
+    
     static float supportRadius;
     static float smoothingRadius;
     static float mass;

@@ -4,6 +4,7 @@
 float SPHParticle::smoothingRadius = 0.025f;
 float SPHParticle::supportRadius = 2.0f * smoothingRadius;
 float SPHParticle::mass = 0.001f;
+ofVec3f SPHFluid::gravity(0.0f, -9.8f, 0.0f);
 
 SPHFluid::SPHFluid(int num) : sht(SpatialHashTable<SPHParticle*>(binSize, numBins)), numParticles(num),
 cubeDims(ofVec3f(1.0f))
@@ -69,6 +70,38 @@ float SPHFluid::helperKernelFnDerivative(float q) {
         return (3.0f / (2.0f * PI)) * (-0.5f * pow((2 - q), 2));
     else
         return 0.0f;
+}
+
+ofVec3f SPHFluid::gradientOfQuantityHelperFn(float a_i, float a_j, SPHParticle & p_i, SPHParticle & p_j) {
+    return p_j.mass
+            * (a_i / pow(p_i.localDensity, 2) + a_j / pow(p_j.localDensity, 2))
+            * gradientOfKernelFn(p_i, p_j);
+}
+
+float SPHFluid::gradientSquaredOfQuantityHelperFn(float a_i_j, SPHParticle & p_i, SPHParticle & p_j) {
+    float m_j = p_j.mass;
+    density rho_j = p_j.localDensity;
+    ofVec3f x_i_j(p_i.pos - p_j.pos);
+    
+    float term1 = m_j / rho_j;
+    //term 2 is a_i_j
+    float term3 = x_i_j.dot(gradientOfKernelFn(p_i, p_j));
+    float term4 = x_i_j.dot(x_i_j) + 0.01f * hRaise2;
+    
+    return term1 * a_i_j * term3 / term4;
+}
+
+ofVec3f SPHFluid::gradientSquaredOfQuantityHelperFn(ofVec3f a_i_j, SPHParticle & p_i, SPHParticle & p_j) {
+    float m_j = p_j.mass;
+    density rho_j = p_j.localDensity;
+    ofVec3f x_i_j(p_i.pos - p_j.pos);
+    
+    float term1 = m_j / rho_j;
+    //term 2 is a_i_j
+    float term3 = x_i_j.dot(gradientOfKernelFn(p_i, p_j));
+    float term4 = x_i_j.dot(x_i_j) + 0.01f * hRaise2;
+    
+    return term1 * a_i_j * term3 / term4;
 }
 
 //--------------------------------------------------
@@ -144,16 +177,43 @@ void SPHFluid::updateParticleDensities() {
     }
 }
 
-//TODO: Implement pressure fn
 void SPHFluid::updateParticlePressure() {
     for(auto & p_i:particles) {
         p_i.localPressure = stiffnessConstant * (pow(p_i.localDensity / restDensity, 7) - 1.0f);
     }
 }
 
-//TODO: Implement fn.
+/**
+ * This function updates the forces on each particle by calculating the net force based 
+ * off the pressure, viscosity, and gravity forces
+ */
 void SPHFluid::computeForces() {
-    
+    for(auto & p_i: particles) {
+        auto neighborBuckets = sht.getNeighboringBuckets(p_i.pos);
+        ofVec3f pressureForce(0);
+        ofVec3f viscosityForce(0);
+        
+        for(auto aBucket: neighborBuckets) {
+            for(auto p_j: aBucket.get()) {
+                if(p_j == &p_i) continue;
+                
+                //1. Compute pressure force
+                pressureForce += gradientOfQuantityHelperFn(p_i.localPressure, p_j->localPressure, p_i, *p_j);
+                
+                //2. Compute viscosity force
+                
+                
+            }
+        }
+        
+        //Need to multiply in mass to finish calculating pressure force
+        pressureForce *= -p_i.mass;
+        ofVec3f gravityForce(p_i.mass * gravity);
+        
+        //Sum up to a net force
+        ofVec3f netForce = pressureForce + viscosityForce + gravityForce;
+        p_i.force = netForce;
+    }
 }
 
 //TODO: Implement fn.

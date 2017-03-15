@@ -16,7 +16,8 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-//    std::cerr << "Frame render time: " << ofGetLastFrameTime() << std::endl;
+    ofBackground(ofColor::black);
+    
     stringstream ss;
     ss << "Frame render time: ";
     ss << ofGetLastFrameTime();
