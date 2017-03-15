@@ -15,11 +15,13 @@ public:
     
     
 private:
-    //Kernel function
+    ///Del of kernel function.
     ofVec3f gradientOfKernelFn(SPHParticle & p1, SPHParticle & p2);
+    ///Kernel function
     float kernelFn(SPHParticle & p1, SPHParticle & p2);
-    //Helper method to caclulate f(q) for kernel function.
+    ///Helper method to caclulate f(q) for kernel function.
     float helperKernelFn(float dist);
+    ///Helper method to calculate f'(q) for kernel function.
     float helperKernelFnDerivative(float dist);
 
     
