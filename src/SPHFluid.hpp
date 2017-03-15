@@ -18,7 +18,8 @@ public:
     float hRaise3 = pow(h, 3);
     float hRaise4 = pow(h, 4);
     const ofVec3f cubeDims;
-    
+    density restDensity = SPHParticle::mass / hRaise3;
+    float stiffnessConstant = 5.0f;
     
     //--------------------------------------------
     //MARK: Draw fns.
@@ -39,6 +40,7 @@ private:
     void updateSHT();
     void updateVBO();
     void updateParticleDensities();
+    void updateParticlePressure();
     void computeForces();
     void applyForces();
     

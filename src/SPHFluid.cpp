@@ -3,6 +3,7 @@
 
 float SPHParticle::smoothingRadius = 0.025f;
 float SPHParticle::supportRadius = 2.0f * smoothingRadius;
+float SPHParticle::mass = 0.001f;
 
 SPHFluid::SPHFluid(int num) : sht(SpatialHashTable<SPHParticle*>(binSize, numBins)), numParticles(num),
 cubeDims(ofVec3f(1.0f))
@@ -77,11 +78,13 @@ void SPHFluid::update() {
     updateSHT();
     //2. Update the particle densities
     updateParticleDensities();
-    //3. Compute and sum pressure, viscosity, and gravity forces
+    //3. Update the particle pressures
+    updateParticlePressure();
+    //4. Compute and sum pressure, viscosity, and gravity forces
     computeForces();
-    //4. Apply forces as acceleration and velocity.
+    //5. Apply forces as acceleration and velocity.
     applyForces();
-    //5. Update VBO for rendering.
+    //6. Update VBO for rendering.
     updateVBO();
 }
 
@@ -138,6 +141,13 @@ void SPHFluid::updateParticleDensities() {
             }
         }
         p_i.localDensity = rho;
+    }
+}
+
+//TODO: Implement pressure fn
+void SPHFluid::updateParticlePressure() {
+    for(auto & p_i:particles) {
+        p_i.localPressure = stiffnessConstant * (pow(p_i.localDensity / restDensity, 7) - 1.0f);
     }
 }
 
