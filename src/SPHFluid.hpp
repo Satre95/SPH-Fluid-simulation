@@ -4,20 +4,21 @@
 #include "SpatialHashTable.hpp"
 #include "SPHParticle.hpp"
 
-typedef float pressure;
-typedef float density;
-typedef float volume;
-
 class SPHFluid {
 public:
     //--------------------------------------------
     //MARK: - Public Methods -
     //--------------------------------------------
 
-	SPHFluid(int numParticles = 10000);
-    const int numParticles;
+	SPHFluid(int numParticles = 1000);
+    int numParticles;
     const float binSize = SPHParticle::smoothingRadius;
     const int numBins = 10000;
+    float h = SPHParticle::smoothingRadius;
+    float hRaise3 = pow(h, 3);
+    float hRaise4 = pow(h, 4);
+    const ofVec3f cubeDims;
+    
     
     //--------------------------------------------
     //MARK: Draw fns.

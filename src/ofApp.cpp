@@ -16,7 +16,7 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-    std::cerr << "Framerate: " << ofGetFrameRate() << std::endl;
+    std::cerr << "Frame render time: " << ofGetLastFrameTime() << std::endl;
     
     camera.begin();
     fluid.drawParticles();

@@ -1,9 +1,11 @@
 #include "SPHFluid.hpp"
+#include <list>
 
 float SPHParticle::smoothingRadius = 0.025f;
 float SPHParticle::supportRadius = 2.0f * smoothingRadius;
 
-SPHFluid::SPHFluid(int num) : sht(SpatialHashTable<SPHParticle*>(binSize, numBins)), numParticles(num)
+SPHFluid::SPHFluid(int num) : sht(SpatialHashTable<SPHParticle*>(binSize, numBins)), numParticles(num),
+cubeDims(ofVec3f(1.0f))
 {
     int particlesPerDim = std::floor(pow(numParticles, 1.0f/3.0f));
     
@@ -12,15 +14,15 @@ SPHFluid::SPHFluid(int num) : sht(SpatialHashTable<SPHParticle*>(binSize, numBin
         for(int y = 0; y < particlesPerDim; y++) {
             for( int x = 0; x < particlesPerDim; x++) {
                 SPHParticle particle;
-                float xDim = 2.0f * (float)x / (float)particlesPerDim;
-                float yDim = 2.0f * (float)y / (float)particlesPerDim;
-                float zDim = 2.0f * (float)z / (float)particlesPerDim;
+                float xDim = cubeDims.x * (float)x / (float)particlesPerDim;
+                float yDim = cubeDims.y * (float)y / (float)particlesPerDim;
+                float zDim = cubeDims.z * (float)z / (float)particlesPerDim;
                 particle.pos = ofVec3f(xDim, yDim, zDim);
                 particle.lastPos = particle.pos;
                 particles.push_back(particle);
                 //insert into the hash table.
                 SPHParticle * particlePtr = &particles.back();
-                sht.insert(particles.back().pos, particlePtr);
+                sht.insert(particlePtr->pos, particlePtr);
             }
         }
     }
@@ -32,15 +34,15 @@ SPHFluid::SPHFluid(int num) : sht(SpatialHashTable<SPHParticle*>(binSize, numBin
 float SPHFluid::kernelFn(SPHParticle & p1, SPHParticle & p2) {
     ofVec3f pos1 = p1.pos;
     ofVec3f pos2 = p2.pos;
-    return (1.0f / pow(SPHParticle::smoothingRadius, 3)) * helperKernelFn(pos1.distance(pos2));
+    return (1.0f / hRaise3) * helperKernelFn(pos1.distance(pos2) / h);
 }
 
 ofVec3f SPHFluid::gradientOfKernelFn(SPHParticle & p1, SPHParticle & p2) {
     ofVec3f pos1 = p1.pos;
     ofVec3f pos2 = p2.pos;
-    float q = pos1.distance(pos2);
+    float q = pos1.distance(pos2) / h;
     
-    float term1 = 1 / pow(SPHParticle::smoothingRadius, 3+1);
+    float term1 = 1 / hRaise4;
     float term2 = helperKernelFnDerivative(q) / q;
     return term1 * term2 * (pos1 - pos2);
 }
@@ -92,9 +94,9 @@ void SPHFluid::updateVBO() {
     for(int i = 0; i < particles.size(); i++) {
         SPHParticle & p = particles.at(i);
         positions.at(i) = p.pos;
-        colors.at(i) = ofFloatColor(p.pos.x / 2.0f,
-                                    p.pos.y / 2.0f,
-                                    p.pos.z / 2.0f,
+        colors.at(i) = ofFloatColor(p.pos.x / cubeDims.x,
+                                    p.pos.y / cubeDims.y,
+                                    p.pos.z / cubeDims.z,
                                     0.8f);
     }
     
@@ -116,14 +118,35 @@ void SPHFluid::updateSHT() {
     }
 }
 
+/** 
+ This function updates the densities of all particles based on their neighboring particles
+ * 1. Compute density from neighboring particles in the same bin
+ * 2. add in density from particles in neighboring bins
+ */
 void SPHFluid::updateParticleDensities() {
-    
+    for(SPHParticle & p_i: particles) {
+        density rho = 0;
+        //Get the neighboring buckets. note that this includes our bucket
+        auto neighborBuckets = sht.getNeighboringBuckets(p_i.pos);
+        
+        for(auto aBucket: neighborBuckets) {
+            //For some neighboring bucket, iterate over the particles
+            for(auto aNeighbor: aBucket.get()) {
+                if(aNeighbor == &p_i) continue;
+                
+                rho += aNeighbor->mass * kernelFn(p_i, *aNeighbor);
+            }
+        }
+        p_i.localDensity = rho;
+    }
 }
 
+//TODO: Implement fn.
 void SPHFluid::computeForces() {
     
 }
 
+//TODO: Implement fn.
 void SPHFluid::applyForces() {
     
 }
@@ -131,6 +154,6 @@ void SPHFluid::applyForces() {
 //--------------------------------------------------
 //MARK: - Draw Functions
 void SPHFluid::drawParticles() {
-    glPointSize(2.0f);
+    glPointSize(4.0f);
     particlesVbo.draw(GL_POINTS, 0, (int)particles.size());
 }
