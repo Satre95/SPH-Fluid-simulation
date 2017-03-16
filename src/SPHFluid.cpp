@@ -184,10 +184,7 @@ void SPHFluid::updateParticleDensities() {
             }
         }
         p_i.localDensity = rho;
-        
-//        std::cerr << "Density: " << p_i.localDensity << std::endl;
     }
-    int blah;
 }
 
 void SPHFluid::updateParticlePressure() {
@@ -216,8 +213,7 @@ void SPHFluid::computeForces() {
                 pressureForce += gradientOfQuantityHelperFn(p_i.localPressure, p_j->localPressure, p_i, *p_j);
                 
                 //2. Compute viscosity force
-                int bla = pressureForce.x + pressureForce.y + pressureForce.z;
-                int j = bla;
+                
             }
         }
         
