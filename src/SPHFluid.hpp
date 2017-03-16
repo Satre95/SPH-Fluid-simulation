@@ -10,7 +10,7 @@ public:
     //MARK: - Public Methods -
     //--------------------------------------------
 
-	SPHFluid(int numParticles = 1000);
+	SPHFluid(int numParticles = 27);
     int numParticles;
     const float binSize = SPHParticle::smoothingRadius;
     const int numBins = 10000;
@@ -18,7 +18,7 @@ public:
     float hRaise2 = pow(h, 2);
     float hRaise3 = pow(h, 3);
     float hRaise4 = pow(h, 4);
-    const ofVec3f cubeDims;
+    ofVec3f cubeDims;
     density restDensity = SPHParticle::mass / hRaise3;
     float stiffnessConstant = 5.0f;
     static ofVec3f gravity;

@@ -13,10 +13,8 @@ public:
 	SpatialHashTable();
 	SpatialHashTable(float binSize, int numBins);
 
-	void insert(ofVec3f position, T && value);
-    void insert(ofVec3f position, T & value);
-	void remove(ofVec3f position, T & value);
-    void remove(ofVec3f position, T && value);
+    void insert(ofVec3f position, T value);
+	void remove(ofVec3f position, T value);
     bool exists(ofVec3f position);
     
     ///Ascertains whether the two positions hash to the same bin.
@@ -53,12 +51,12 @@ SpatialHashTable<T>::SpatialHashTable(float binSize, int numBins)
 {
 	this->binSize = binSize;
 	this->numBins = numBins;
-    diagDist = sqrt(pow(binSize, 2) * 3.0f);
-    diagDist2d = sqrt(pow(binSize, 2) * 2.0f);
+    diagDist = pow(binSize, 2) * sqrt(3.0f);
+    diagDist2d = pow(binSize, 2) * sqrt(2.0f);
 }
 
 template<typename T>
-void SpatialHashTable<T>::insert(ofVec3f position, T && value) {
+void SpatialHashTable<T>::insert(ofVec3f position, T value) {
 	//Get the hash key for the given position
 	HashKey key = hashPosition(position);
 
@@ -71,22 +69,8 @@ void SpatialHashTable<T>::insert(ofVec3f position, T && value) {
 	list.push_back(value);
 }
 
-template<typename T>
-void SpatialHashTable<T>::insert(ofVec3f position, T & value){
-    //Get the hash key for the given position
-    HashKey key = hashPosition(position);
-    
-    //if the bin that this position hashes to has not been used before, need to create it first.
-    if (bins.find(key) == bins.end())
-        bins.insert(std::make_pair(key, std::list<T>()));
-    
-    //Insert into the list at the given key
-    std::list<T> & list = bins.at(key);
-    list.push_back(value);
-}
-
 template <typename T>
-void SpatialHashTable<T>::remove(ofVec3f position, T & value) {
+void SpatialHashTable<T>::remove(ofVec3f position, T value) {
 	//Get the hash key for the given position
 	HashKey key = hashPosition(position);
 
@@ -99,22 +83,6 @@ void SpatialHashTable<T>::remove(ofVec3f position, T & value) {
 
 	std::list<T> & items = bins.at(key);
 	items.remove(value);
-}
-
-template <typename T>
-void SpatialHashTable<T>::remove(ofVec3f position, T && value) {
-    //Get the hash key for the given position
-    HashKey key = hashPosition(position);
-    
-    //If the given position does not map to a slot in the map, return
-    if (bins.find(key) == bins.end()) {
-        std::cerr << "ERROR: Trying to remove item for position that is not stored in hash table" << std::endl;
-        std::cerr << "Offending Position: " << position << std::endl;
-        return;
-    }
-    
-    std::list<T> & items = bins.at(key);
-    items.remove(value);
 }
 
 template<typename T>
@@ -156,14 +124,20 @@ std::vector<std::reference_wrapper<std::list<T>>> SpatialHashTable<T>::getNeighb
     
     //1. go over single dimensions
     //  1.a go over x dimension
-    if(exists(pos + ofVec3f(binSize, 0, 0))) lists.push_back(*find(pos + ofVec3f(binSize, 0, 0)));
-    if(exists(pos - ofVec3f(binSize, 0, 0))) lists.push_back(*find(pos - ofVec3f(binSize, 0, 0)));
+    if(exists(pos + ofVec3f(binSize, 0, 0)))
+        lists.push_back(*find(pos + ofVec3f(binSize, 0, 0)));
+    if(exists(pos - ofVec3f(binSize, 0, 0)))
+        lists.push_back(*find(pos - ofVec3f(binSize, 0, 0)));
     //  1.b go over y dimension
-    if(exists(pos + ofVec3f(0, binSize, 0))) lists.push_back(*find(pos + ofVec3f(0, binSize, 0)));
-    if(exists(pos - ofVec3f(0, binSize, 0))) lists.push_back(*find(pos - ofVec3f(0, binSize, 0)));
+    if(exists(pos + ofVec3f(0, binSize, 0)))
+        lists.push_back(*find(pos + ofVec3f(0, binSize, 0)));
+    if(exists(pos - ofVec3f(0, binSize, 0)))
+        lists.push_back(*find(pos - ofVec3f(0, binSize, 0)));
     //  1.c go over z dimension
-    if(exists(pos + ofVec3f(0, 0, binSize))) lists.push_back(*find(pos + ofVec3f(0, 0, binSize)));
-    if(exists(pos - ofVec3f(0, 0, binSize))) lists.push_back(*find(pos - ofVec3f(0, 0, binSize)));
+    if(exists(pos + ofVec3f(0, 0, binSize)))
+        lists.push_back(*find(pos + ofVec3f(0, 0, binSize)));
+    if(exists(pos - ofVec3f(0, 0, binSize)))
+        lists.push_back(*find(pos - ofVec3f(0, 0, binSize)));
     
     //2. go over diagonal cells
     //  2.a right top front  and left bottom back
@@ -209,5 +183,6 @@ std::vector<std::reference_wrapper<std::list<T>>> SpatialHashTable<T>::getNeighb
     //4. Finally, add our bucket
     if(exists(pos)) lists.push_back(*find(pos));
     
+    assert(lists.size() <= 27);
     return lists;
 }

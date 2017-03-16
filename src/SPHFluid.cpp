@@ -1,15 +1,17 @@
 #include "SPHFluid.hpp"
 #include <list>
+#include <math.h>
 
 float SPHParticle::smoothingRadius = 0.025f;
-float SPHParticle::supportRadius = 2.0f * smoothingRadius;
-float SPHParticle::mass = 0.001f;
+float SPHParticle::supportRadius = 2.0f * SPHParticle::smoothingRadius;
+float SPHParticle::mass = 0.1f;
 ofVec3f SPHFluid::gravity(0.0f, -9.8f, 0.0f);
 
-SPHFluid::SPHFluid(int num) : sht(SpatialHashTable<SPHParticle*>(binSize, numBins)), numParticles(num),
-cubeDims(ofVec3f(1.0f))
+SPHFluid::SPHFluid(int num) : sht(SpatialHashTable<SPHParticle*>(binSize, numBins))
 {
-    int particlesPerDim = std::floor(pow(numParticles, 1.0f/3.0f));
+    int particlesPerDim = std::floor(pow(num, 1.0f/3.0f));
+    numParticles = pow(particlesPerDim, 3);
+    cubeDims = ofVec3f(particlesPerDim * SPHParticle::smoothingRadius);
     
     //Allocate the particles in a 2x2x2 cube that is at height 4
     for (int z = 0; z < particlesPerDim; z++) {
@@ -50,6 +52,7 @@ ofVec3f SPHFluid::gradientOfKernelFn(SPHParticle & p1, SPHParticle & p2) {
 }
 
 float SPHFluid::helperKernelFn(float q) {
+    if(q <= 0.00001f) return 0;
     
     if(q >= 0.0f && q < 1.0f) {
         return (3.0f / (2.0f * PI)) * (2.0f / 3.0f - pow(q, 2) + 0.5f * pow(q, 3));
@@ -64,6 +67,8 @@ float SPHFluid::helperKernelFn(float q) {
 }
 
 float SPHFluid::helperKernelFnDerivative(float q) {
+    if(q <= 0.00001f) return 0;
+    
     if(q >=0.0f && q < 1.0f )
         return (3.0f / (2.0f * PI)) * (-2.0f * q + 1.5f * pow(q, 2));
     else if(q >= 1.0f && q < 2.0f)
@@ -73,9 +78,13 @@ float SPHFluid::helperKernelFnDerivative(float q) {
 }
 
 ofVec3f SPHFluid::gradientOfQuantityHelperFn(float a_i, float a_j, SPHParticle & p_i, SPHParticle & p_j) {
-    return p_j.mass
-            * (a_i / pow(p_i.localDensity, 2) + a_j / pow(p_j.localDensity, 2))
-            * gradientOfKernelFn(p_i, p_j);
+    if(isnan(p_i.localDensity) || p_i.localDensity < 0.0001f ||
+       isnan(p_j.localDensity) || p_j.localDensity < 0.0001f)
+       return ofVec3f(0);
+    
+    float term2 = (a_i / pow(p_i.localDensity, 2)) + (a_j / pow(p_j.localDensity, 2));
+    ofVec3f term3 = gradientOfKernelFn(p_i, p_j);;
+    return p_j.mass * term2 * term3;
 }
 
 float SPHFluid::gradientSquaredOfQuantityHelperFn(float a_i_j, SPHParticle & p_i, SPHParticle & p_j) {
@@ -161,7 +170,7 @@ void SPHFluid::updateSHT() {
  */
 void SPHFluid::updateParticleDensities() {
     for(SPHParticle & p_i: particles) {
-        density rho = 0;
+        float rho = 0;
         //Get the neighboring buckets. note that this includes our bucket
         auto neighborBuckets = sht.getNeighboringBuckets(p_i.pos);
         
@@ -170,15 +179,21 @@ void SPHFluid::updateParticleDensities() {
             for(auto aNeighbor: aBucket.get()) {
                 if(aNeighbor == &p_i) continue;
                 
-                rho += aNeighbor->mass * kernelFn(p_i, *aNeighbor);
+                if(p_i.pos.distance(aNeighbor->pos) < 2.0f * h)
+                    rho += aNeighbor->mass * kernelFn(p_i, *aNeighbor);
             }
         }
         p_i.localDensity = rho;
+        
+//        std::cerr << "Density: " << p_i.localDensity << std::endl;
     }
+    int blah;
 }
 
 void SPHFluid::updateParticlePressure() {
     for(auto & p_i:particles) {
+        if(abs(p_i.localDensity) < 0.00001f || isnan(p_i.localDensity)) continue;
+        
         p_i.localPressure = stiffnessConstant * (pow(p_i.localDensity / restDensity, 7) - 1.0f);
     }
 }
@@ -201,8 +216,8 @@ void SPHFluid::computeForces() {
                 pressureForce += gradientOfQuantityHelperFn(p_i.localPressure, p_j->localPressure, p_i, *p_j);
                 
                 //2. Compute viscosity force
-                
-                
+                int bla = pressureForce.x + pressureForce.y + pressureForce.z;
+                int j = bla;
             }
         }
         
