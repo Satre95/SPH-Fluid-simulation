@@ -22,6 +22,7 @@ public:
     ofVec3f cubeDims;
     density restDensity = SPHParticle::mass / hRaise3;
     ofParameter<float> stiffnessConstant;
+    ofParameter<float> fps;
     static ofVec3f gravity;
     ofParameter<float> viscosityConstant;
     float timeStep = 0.01f;

@@ -4,7 +4,7 @@
 //--------------------------------------------------------------
 void ofApp::setup(){
     ofSetFrameRate(60);
-    camera.setDistance(0.5f);
+    camera.setDistance(1.0f);
     camera.setNearClip(0.01f);
     camera.setFarClip(1000.0f);
 //    paused = true;

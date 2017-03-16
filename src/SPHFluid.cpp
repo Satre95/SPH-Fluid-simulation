@@ -38,6 +38,7 @@ SPHFluid::SPHFluid(int num) : sht(SpatialHashTable<SPHParticle*>(binSize, numBin
     panel.setup("Controls");
     panel.add(stiffnessConstant.set("Stiffness Constant", 1.0f, 0.1f, 4.0f));
     panel.add(viscosityConstant.set("Viscosity Constant", 1e-5f, 1e-6f, 1e-3f));
+    panel.add(fps.set("FPS", ofGetFrameRate(), 1, 60));
 }
 
 
@@ -132,6 +133,8 @@ ofVec3f SPHFluid::gradientSquaredOfQuantityHelperFn(ofVec3f a_i_j, SPHParticle &
 //--------------------------------------------------
 //MARK: - Update Functions
 void SPHFluid::update() {
+    fps = ofGetFrameRate();
+    
     //1. Update the position data in the hashTable.
     updateSHT();
     //2. Update the particle densities
@@ -237,14 +240,12 @@ void SPHFluid::computeForces() {
         
         //Sum up to a net force
         ofVec3f netForce = pressureForce + viscosityForce + gravityForce;
-        float xF = netForce.x; float zF = netForce.z;
         p_i.force = netForce;
     }
 }
 
 void SPHFluid::applyForces() {
     
-    float deltaTime = 0;
     float lambda = 0.4f;
     //Find the fastest particle
     ofVec3f maxVel(0);
@@ -253,7 +254,7 @@ void SPHFluid::applyForces() {
            maxVel = p_i.vel;
     }
     
-    deltaTime = (timeStep <= lambda * h / maxVel.length()) ?
+    float deltaTime = (timeStep <= lambda * h / maxVel.length()) ?
                 timeStep : lambda * h / maxVel.length();
     
     for(auto & p_i: particles) {
@@ -264,8 +265,8 @@ void SPHFluid::applyForces() {
 }
 
 void SPHFluid::detectCollisions() {
-    float alpha = 0.2f;
-    float beta = 0.2;
+    float alpha = 0.02f;
+    float beta = 0.02f;
     float gamma = 0.5f;
     
     for(auto & p_i: particles) {
