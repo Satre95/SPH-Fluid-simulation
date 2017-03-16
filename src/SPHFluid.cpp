@@ -346,8 +346,8 @@ void SPHFluid::drawParticles() {
     
     ofNoFill();
     //Draw a wire box to show the bounding box.
-    ofPoint p(boundingBox.x/2.0f, -boundingBox.y/2, boundingBox.z/2.0f);
-    ofDrawBox(p, boundingBox.x, boundingBox.y, boundingBox.z);
+//    ofPoint p(boundingBox.x/2.0f, -boundingBox.y/2, boundingBox.z/2.0f);
+//    ofDrawBox(p, boundingBox.x, boundingBox.y, boundingBox.z);
     ofFill();
 }
 
