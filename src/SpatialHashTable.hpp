@@ -16,6 +16,7 @@ public:
     void insert(ofVec3f position, T value);
 	void remove(ofVec3f position, const T & value);
     bool exists(ofVec3f position);
+    void clear();
     
     ///Ascertains whether the two positions hash to the same bin.
     bool compareKeyHashes(ofVec3f pos1, ofVec3f pos2);
@@ -176,3 +177,6 @@ std::vector<std::reference_wrapper<std::list<T>>> SpatialHashTable<T>::getNeighb
     assert(lists.size() <= 27);
     return lists;
 }
+
+template <typename T>
+void SpatialHashTable<T>::clear() { bins.clear(); }

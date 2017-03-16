@@ -3,6 +3,7 @@
 #include "ofMain.h"
 #include "SpatialHashTable.hpp"
 #include "SPHParticle.hpp"
+#include "ofxGui.h"
 
 class SPHFluid {
 public:
@@ -10,7 +11,7 @@ public:
     //MARK: - Public Methods -
     //--------------------------------------------
 
-	SPHFluid(int numParticles = 729);
+	SPHFluid(int numParticles = 1000);
     int numParticles;
     const float binSize = SPHParticle::smoothingRadius;
     const int numBins = 10000;
@@ -20,21 +21,23 @@ public:
     float hRaise4 = pow(h, 4);
     ofVec3f cubeDims;
     density restDensity = SPHParticle::mass / hRaise3;
-    float stiffnessConstant = 2.0f;
+    ofParameter<float> stiffnessConstant;
     static ofVec3f gravity;
-    float viscosityConstant = 0.0894f;
+    ofParameter<float> viscosityConstant;
     float timeStep = 0.01f;
     ofVec3f boundingBox;
     
     //--------------------------------------------
     //MARK: Draw fns.
     void drawParticles();
+    void drawGui();
     
 
     //--------------------------------------------
     //MARK: Update fns
     void update();
     void setPosAsColor(bool allow);
+    void resetParticles();
 
 private:
     //--------------------------------------------
@@ -77,5 +80,5 @@ private:
     std::vector<SPHParticle> particles;
     ofVbo particlesVbo;
     
- 
+    ofxPanel panel;
 };

@@ -4,7 +4,7 @@
 //--------------------------------------------------------------
 void ofApp::setup(){
     ofSetFrameRate(60);
-    camera.setDistance(2.0f);
+    camera.setDistance(0.5f);
     camera.setNearClip(0.01f);
     camera.setFarClip(1000.0f);
 //    paused = true;
@@ -24,11 +24,13 @@ void ofApp::draw(){
     stringstream ss;
     ss << "Frame render time: ";
     ss << ofGetLastFrameTime();
-    ofDrawBitmapString(ss.str(), 10, 10);
+    ofDrawBitmapString(ss.str(), 10, ofGetHeight() - 30.0f);
     
     camera.begin();
     fluid.drawParticles();
     camera.end();
+    
+    fluid.drawGui();
 }
 
 //--------------------------------------------------------------
@@ -44,6 +46,8 @@ void ofApp::keyReleased(int key){
         posAsColor = !posAsColor;
         fluid.setPosAsColor(posAsColor);
     }
+    else if(key == 'r')
+        fluid.resetParticles();
 }
 
 //--------------------------------------------------------------

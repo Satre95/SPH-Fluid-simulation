@@ -2,6 +2,7 @@
 
 #include "ofMain.h"
 #include "SPHFluid.hpp"
+
 class ofApp : public ofBaseApp{
 
 public:
@@ -25,4 +26,6 @@ public:
     ofEasyCam camera;
     bool paused = false;
     bool posAsColor = true;
+    
+    
 };

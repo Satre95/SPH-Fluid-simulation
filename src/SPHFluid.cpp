@@ -11,11 +11,9 @@ SPHFluid::SPHFluid(int num) : sht(SpatialHashTable<SPHParticle*>(binSize, numBin
 {
     int particlesPerDim = std::floor(pow(num, 1.0f/3.0f));
     numParticles = pow(particlesPerDim, 3);
-    cubeDims = ofVec3f(particlesPerDim * SPHParticle::smoothingRadius);
+    cubeDims = ofVec3f(particlesPerDim * SPHParticle::smoothingRadius) * 0.5f;
     
     //Allocate the particles in a cube centered at origin.
-//    ofVec3f offset = cubeDims / 2.0f;
-    ofVec3f offset(0);
     for (int z = 0; z < particlesPerDim; z++) {
         for(int y = 0; y < particlesPerDim; y++) {
             for( int x = 0; x < particlesPerDim; x++) {
@@ -23,7 +21,7 @@ SPHFluid::SPHFluid(int num) : sht(SpatialHashTable<SPHParticle*>(binSize, numBin
                 float xDim = cubeDims.x * (float)x / (float)particlesPerDim;
                 float yDim = cubeDims.y * (float)y / (float)particlesPerDim;
                 float zDim = cubeDims.z * (float)z / (float)particlesPerDim;
-                particle.pos = ofVec3f(xDim, yDim, zDim) - offset;
+                particle.pos = ofVec3f(xDim, yDim, zDim);
                 particle.lastPos = particle.pos;
                 particles.push_back(particle);
                 //insert into the hash table.
@@ -33,10 +31,13 @@ SPHFluid::SPHFluid(int num) : sht(SpatialHashTable<SPHParticle*>(binSize, numBin
         }
     }
     
-    boundingBox = ofVec3f(cubeDims.x, cubeDims.y * 6, cubeDims.z);
-    
+    boundingBox = ofVec3f(1.5f * cubeDims.x, cubeDims.y * 6, 1.5f * cubeDims.z);
     //Call updateVBO to initalize
     updateVBO();
+    
+    panel.setup("Controls");
+    panel.add(stiffnessConstant.set("Stiffness Constant", 1.0f, 0.1f, 4.0f));
+    panel.add(viscosityConstant.set("Viscosity Constant", 1e-5f, 1e-6f, 1e-3f));
 }
 
 
@@ -52,6 +53,8 @@ ofVec3f SPHFluid::gradientOfKernelFn(SPHParticle & p1, SPHParticle & p2) {
     ofVec3f pos1 = p1.pos;
     ofVec3f pos2 = p2.pos;
     float q = pos1.distance(pos2) / h;
+    if(isnan(q) || q < 0.0000001f)
+        return ofVec3f(0);
     
     float term1 = 1 / hRaise4;
     float term2 = helperKernelFnDerivative(q) / q;
@@ -110,6 +113,9 @@ float SPHFluid::gradientSquaredOfQuantityHelperFn(float a_i_j, SPHParticle & p_i
 ofVec3f SPHFluid::gradientSquaredOfQuantityHelperFn(ofVec3f a_i_j, SPHParticle & p_i, SPHParticle & p_j) {
     if(isnan(p_j.localDensity) || p_j.localDensity < 0.000001f )
         return ofVec3f(0);
+    if(isnan(p_i.localDensity) || p_i.localDensity < 0.000001f )
+        return ofVec3f(0);
+
     
     float m_j = p_j.mass;
     density rho_j = p_j.localDensity;
@@ -196,7 +202,7 @@ void SPHFluid::updateParticlePressure() {
     for(auto & p_i:particles) {
         if(abs(p_i.localDensity) < 0.00001f || isnan(p_i.localDensity)) continue;
         
-        p_i.localPressure = stiffnessConstant * (pow(p_i.localDensity / restDensity, 7) - 1.0f);
+        p_i.localPressure = stiffnessConstant.get() * (pow(p_i.localDensity / restDensity, 7) - 1.0f);
     }
 }
 
@@ -223,9 +229,9 @@ void SPHFluid::computeForces() {
         }
         
         //Need to multiply in mass to finish calculating pressure force
-        pressureForce *= -p_i.mass;
+        pressureForce *= -p_i.mass / p_i.localDensity;
         //Need to multiply viscosity force by some constants
-        viscosityForce *= p_i.mass * viscosityConstant * 2.0f;
+        viscosityForce *= p_i.mass * viscosityConstant.get() * 2.0f;
         //3. Calculate gravity.
         ofVec3f gravityForce(p_i.mass * gravity);
         
@@ -237,60 +243,96 @@ void SPHFluid::computeForces() {
 }
 
 void SPHFluid::applyForces() {
+    
+    float deltaTime = 0;
+    float lambda = 0.4f;
+    //Find the fastest particle
+    ofVec3f maxVel(0);
     for(auto & p_i: particles) {
-        p_i.vel = p_i.vel + timeStep * p_i.force / p_i.mass;
+       if(p_i.vel.length() > maxVel.length())
+           maxVel = p_i.vel;
+    }
+    
+    deltaTime = (timeStep <= lambda * h / maxVel.length()) ?
+                timeStep : lambda * h / maxVel.length();
+    
+    for(auto & p_i: particles) {
+        p_i.vel = p_i.vel + deltaTime * p_i.force / p_i.mass;
         p_i.lastPos = p_i.pos;
-        p_i.pos = p_i.pos + timeStep * p_i.vel;
+        p_i.pos = p_i.pos + deltaTime * p_i.vel;
     }
 }
 
 void SPHFluid::detectCollisions() {
     float alpha = 0.2f;
-    float beta = 0.2f;
+    float beta = 0.2;
+    float gamma = 0.5f;
     
     for(auto & p_i: particles) {
         auto & pos = p_i.pos;
         //X
         if(pos.x < -boundingBox.x / 2.0f) { //Left wall
             pos.x = -boundingBox.x - pos.x;
-            p_i.vel.x = -p_i.vel.x;
+            p_i.vel.x *= -gamma;
             p_i.vel.y *= alpha;
             p_i.vel.z *= beta;
         }
         if(pos.x > boundingBox.x / 2.0f ) { //Right wall
             pos.x = boundingBox.x - pos.x;
-            p_i.vel.x = -p_i.vel.x;
+            p_i.vel.x *= -gamma;
             p_i.vel.y *= alpha;
             p_i.vel.z *= beta;
         }
         //Y
-        if(pos.y < -boundingBox.y / 2.0f) { //Top wall
+        if(pos.y < -boundingBox.y / 2.0f) { //Bottom wall
             pos.y = -boundingBox.y - pos.y;
-            p_i.vel.y = -p_i.vel.y;
+            p_i.vel.y *= -gamma;
             p_i.vel.x *= alpha;
             p_i.vel.z *= beta;
         }
-        if(pos.y > boundingBox.y / 2.0f) { //Bottom wall
+        if(pos.y > boundingBox.y / 2.0f) { //Top wall
             pos.y = boundingBox.y - pos.y;
-            p_i.vel.y = -p_i.vel.y;
+            p_i.vel.y *= -gamma;
             p_i.vel.x *= alpha;
             p_i.vel.z *= beta;
         }
         //Z
         if(pos.z < -boundingBox.z / 2.0f) { //Back wall
             pos.z = -boundingBox.z - pos.z;
-            p_i.vel.z = -p_i.vel.z;
+            p_i.vel.z *= -gamma;
             p_i.vel.x *= alpha;
             p_i.vel.y *= beta;
         }
         if(pos.z > boundingBox.z / 2.0f) { //Front wall
             pos.z = boundingBox.z - pos.z;
-            p_i.vel.z = -p_i.vel.z;
+            p_i.vel.z *= -gamma;
             p_i.vel.x *= alpha;
             p_i.vel.y *= beta;
         }
     }
     
+}
+
+void SPHFluid::resetParticles() {
+    particles.clear();
+    sht.clear();
+    int particlesPerDim = (int)pow(numParticles, 1.0f/3.0f);
+    for (int z = 0; z < particlesPerDim; z++) {
+        for(int y = 0; y < particlesPerDim; y++) {
+            for( int x = 0; x < particlesPerDim; x++) {
+                SPHParticle particle;
+                float xDim = cubeDims.x * (float)x / (float)particlesPerDim;
+                float yDim = cubeDims.y * (float)y / (float)particlesPerDim;
+                float zDim = cubeDims.z * (float)z / (float)particlesPerDim;
+                particle.pos = ofVec3f(xDim, yDim, zDim);
+                particle.lastPos = particle.pos;
+                particles.push_back(particle);
+                //insert into the hash table.
+                SPHParticle * particlePtr = &particles.back();
+                sht.insert(particlePtr->pos, particlePtr);
+            }
+        }
+    }
 }
 
 //--------------------------------------------------
@@ -304,9 +346,13 @@ void SPHFluid::drawParticles() {
     
     ofNoFill();
     //Draw a wire box to show the bounding box.
-//    ofPoint p(boundingBox.x/2.0f, -boundingBox.y/2, boundingBox.z/2.0f);
-//    ofDrawBox(p, boundingBox.x, boundingBox.y, boundingBox.z);
+    ofPoint p(boundingBox.x/2.0f, -boundingBox.y/2, boundingBox.z/2.0f);
+    ofDrawBox(p, boundingBox.x, boundingBox.y, boundingBox.z);
     ofFill();
+}
+
+void SPHFluid::drawGui() {
+    panel.draw();
 }
 
 void SPHFluid::setPosAsColor(bool allow) {
