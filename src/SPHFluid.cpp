@@ -78,8 +78,8 @@ float SPHFluid::helperKernelFnDerivative(float q) {
 }
 
 ofVec3f SPHFluid::gradientOfQuantityHelperFn(float a_i, float a_j, SPHParticle & p_i, SPHParticle & p_j) {
-    if(isnan(p_i.localDensity) || p_i.localDensity < 0.0001f ||
-       isnan(p_j.localDensity) || p_j.localDensity < 0.0001f)
+    if(isnan(p_i.localDensity) || p_i.localDensity < 0.000001f ||
+       isnan(p_j.localDensity) || p_j.localDensity < 0.000001f)
        return ofVec3f(0);
     
     float term2 = (a_i / pow(p_i.localDensity, 2)) + (a_j / pow(p_j.localDensity, 2));
@@ -101,6 +101,9 @@ float SPHFluid::gradientSquaredOfQuantityHelperFn(float a_i_j, SPHParticle & p_i
 }
 
 ofVec3f SPHFluid::gradientSquaredOfQuantityHelperFn(ofVec3f a_i_j, SPHParticle & p_i, SPHParticle & p_j) {
+    if(isnan(p_j.localDensity) || p_j.localDensity < 0.000001f )
+        return ofVec3f(0);
+    
     float m_j = p_j.mass;
     density rho_j = p_j.localDensity;
     ofVec3f x_i_j(p_i.pos - p_j.pos);
@@ -213,16 +216,20 @@ void SPHFluid::computeForces() {
                 pressureForce += gradientOfQuantityHelperFn(p_i.localPressure, p_j->localPressure, p_i, *p_j);
                 
                 //2. Compute viscosity force
-                
+                viscosityForce += gradientSquaredOfQuantityHelperFn(p_i.vel - p_j->vel, p_i, *p_j);
             }
         }
         
         //Need to multiply in mass to finish calculating pressure force
         pressureForce *= -p_i.mass;
+        //Need to multiply viscosity force by some constants
+        viscosityForce *= p_i.mass * viscosityConstant * 2.0f;
+        //3. Calculate gravity.
         ofVec3f gravityForce(p_i.mass * gravity);
         
         //Sum up to a net force
         ofVec3f netForce = pressureForce + viscosityForce + gravityForce;
+        float xF = netForce.x; float zF = netForce.z;
         p_i.force = netForce;
     }
 }

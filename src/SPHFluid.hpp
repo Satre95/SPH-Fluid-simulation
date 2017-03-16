@@ -22,6 +22,7 @@ public:
     density restDensity = SPHParticle::mass / hRaise3;
     float stiffnessConstant = 5.0f;
     static ofVec3f gravity;
+    float viscosityConstant;
     
     //--------------------------------------------
     //MARK: Draw fns.
@@ -58,11 +59,11 @@ private:
     float helperKernelFn(float dist);
     ///Helper method to calculate f'(q) for kernel function.
     float helperKernelFnDerivative(float dist);
-    ///Calculates ∇ of given quantity (a_i) using kernel function
+    ///Calculates Del of given quantity (a_i) using kernel function
     ofVec3f gradientOfQuantityHelperFn(float a_i, float a_j, SPHParticle & p_i, SPHParticle & p_j);
-    ///Calculates ∇^2 * A_i using kernel function
+    ///Calculates Del^2 * A_i using kernel function
     float gradientSquaredOfQuantityHelperFn(float a_i_j, SPHParticle & p_i, SPHParticle & p_j);
-    ///Calculates ∇^2 * A_i using kernel function
+    ///Calculates Del^2 * A_i using kernel function
     ofVec3f gradientSquaredOfQuantityHelperFn(ofVec3f a_i_j, SPHParticle & p_i, SPHParticle & p_j);
     
 
