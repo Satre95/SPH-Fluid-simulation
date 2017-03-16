@@ -20,9 +20,11 @@ public:
     float hRaise4 = pow(h, 4);
     ofVec3f cubeDims;
     density restDensity = SPHParticle::mass / hRaise3;
-    float stiffnessConstant = 5.0f;
+    float stiffnessConstant = 2.0f;
     static ofVec3f gravity;
-    float viscosityConstant = 0.894f;
+    float viscosityConstant = 0.0894f;
+    float timeStep = 0.01f;
+    ofVec3f boundingBox;
     
     //--------------------------------------------
     //MARK: Draw fns.
@@ -32,6 +34,7 @@ public:
     //--------------------------------------------
     //MARK: Update fns
     void update();
+    void setPosAsColor(bool allow);
 
 private:
     //--------------------------------------------
@@ -44,6 +47,7 @@ private:
     void updateVBO();
     void updateParticleDensities();
     void updateParticlePressure();
+    void detectCollisions();
     void computeForces();
     void applyForces();
     

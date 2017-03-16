@@ -4,13 +4,16 @@
 //--------------------------------------------------------------
 void ofApp::setup(){
     ofSetFrameRate(60);
-    camera.setDistance(5.0f);
+    camera.setDistance(2.0f);
     camera.setNearClip(0.01f);
     camera.setFarClip(1000.0f);
+//    paused = true;
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
+    if(paused) return;
+    
     fluid.update();
 }
 
@@ -35,7 +38,12 @@ void ofApp::keyPressed(int key){
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){
-
+    if(key == 'p')
+        paused = !paused;
+    else if(key == 'c') {
+        posAsColor = !posAsColor;
+        fluid.setPosAsColor(posAsColor);
+    }
 }
 
 //--------------------------------------------------------------

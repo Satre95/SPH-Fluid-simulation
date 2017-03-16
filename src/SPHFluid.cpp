@@ -13,7 +13,9 @@ SPHFluid::SPHFluid(int num) : sht(SpatialHashTable<SPHParticle*>(binSize, numBin
     numParticles = pow(particlesPerDim, 3);
     cubeDims = ofVec3f(particlesPerDim * SPHParticle::smoothingRadius);
     
-    //Allocate the particles in a 2x2x2 cube that is at height 4
+    //Allocate the particles in a cube centered at origin.
+//    ofVec3f offset = cubeDims / 2.0f;
+    ofVec3f offset(0);
     for (int z = 0; z < particlesPerDim; z++) {
         for(int y = 0; y < particlesPerDim; y++) {
             for( int x = 0; x < particlesPerDim; x++) {
@@ -21,7 +23,7 @@ SPHFluid::SPHFluid(int num) : sht(SpatialHashTable<SPHParticle*>(binSize, numBin
                 float xDim = cubeDims.x * (float)x / (float)particlesPerDim;
                 float yDim = cubeDims.y * (float)y / (float)particlesPerDim;
                 float zDim = cubeDims.z * (float)z / (float)particlesPerDim;
-                particle.pos = ofVec3f(xDim, yDim, zDim);
+                particle.pos = ofVec3f(xDim, yDim, zDim) - offset;
                 particle.lastPos = particle.pos;
                 particles.push_back(particle);
                 //insert into the hash table.
@@ -30,6 +32,11 @@ SPHFluid::SPHFluid(int num) : sht(SpatialHashTable<SPHParticle*>(binSize, numBin
             }
         }
     }
+    
+    boundingBox = ofVec3f(cubeDims.x, cubeDims.y * 6, cubeDims.z);
+    
+    //Call updateVBO to initalize
+    updateVBO();
 }
 
 
@@ -129,29 +136,24 @@ void SPHFluid::update() {
     computeForces();
     //5. Apply forces as acceleration and velocity.
     applyForces();
-    //6. Update VBO for rendering.
+    //6. Detect and correct any collisions with the bounding box
+    detectCollisions();
+    //7. Update VBO for rendering.
     updateVBO();
 }
 
 void SPHFluid::updateVBO() {
     //Extract positions
     vector<ofVec3f> positions(particles.size());
-    //Use colors as positions
-    vector<ofFloatColor> colors(particles.size());
     
     for(int i = 0; i < particles.size(); i++) {
         SPHParticle & p = particles.at(i);
         positions.at(i) = p.pos;
-        colors.at(i) = ofFloatColor(p.pos.x / cubeDims.x,
-                                    p.pos.y / cubeDims.y,
-                                    p.pos.z / cubeDims.z,
-                                    0.8f);
     }
     
 
     
     particlesVbo.setVertexData(positions.data(), (int)positions.size(), GL_DYNAMIC_DRAW);
-    particlesVbo.setColorData(colors.data(), (int)colors.size(), GL_DYNAMIC_DRAW);
 }
 
 void SPHFluid::updateSHT() {
@@ -234,18 +236,81 @@ void SPHFluid::computeForces() {
     }
 }
 
-//TODO: Implement fn.
 void SPHFluid::applyForces() {
     for(auto & p_i: particles) {
-        p_i.vel = p_i.vel + (float)ofGetLastFrameTime() * p_i.force / p_i.mass;
+        p_i.vel = p_i.vel + timeStep * p_i.force / p_i.mass;
         p_i.lastPos = p_i.pos;
-        p_i.pos = p_i.pos + (float)ofGetLastFrameTime() * p_i.vel;
+        p_i.pos = p_i.pos + timeStep * p_i.vel;
     }
+}
+
+void SPHFluid::detectCollisions() {
+    float alpha = 0.2f;
+    float beta = 0.2f;
+    
+    for(auto & p_i: particles) {
+        auto & pos = p_i.pos;
+        //X
+        if(pos.x < -boundingBox.x / 2.0f) { //Left wall
+            pos.x = -boundingBox.x - pos.x;
+            p_i.vel.x = -p_i.vel.x;
+            p_i.vel.y *= alpha;
+            p_i.vel.z *= beta;
+        }
+        if(pos.x > boundingBox.x / 2.0f ) { //Right wall
+            pos.x = boundingBox.x - pos.x;
+            p_i.vel.x = -p_i.vel.x;
+            p_i.vel.y *= alpha;
+            p_i.vel.z *= beta;
+        }
+        //Y
+        if(pos.y < -boundingBox.y / 2.0f) { //Top wall
+            pos.y = -boundingBox.y - pos.y;
+            p_i.vel.y = -p_i.vel.y;
+            p_i.vel.x *= alpha;
+            p_i.vel.z *= beta;
+        }
+        if(pos.y > boundingBox.y / 2.0f) { //Bottom wall
+            pos.y = boundingBox.y - pos.y;
+            p_i.vel.y = -p_i.vel.y;
+            p_i.vel.x *= alpha;
+            p_i.vel.z *= beta;
+        }
+        //Z
+        if(pos.z < -boundingBox.z / 2.0f) { //Back wall
+            pos.z = -boundingBox.z - pos.z;
+            p_i.vel.z = -p_i.vel.z;
+            p_i.vel.x *= alpha;
+            p_i.vel.y *= beta;
+        }
+        if(pos.z > boundingBox.z / 2.0f) { //Front wall
+            pos.z = boundingBox.z - pos.z;
+            p_i.vel.z = -p_i.vel.z;
+            p_i.vel.x *= alpha;
+            p_i.vel.y *= beta;
+        }
+    }
+    
 }
 
 //--------------------------------------------------
 //MARK: - Draw Functions
 void SPHFluid::drawParticles() {
-    glPointSize(4.0f);
+    glPointSize(2.0f);
+    ofSetColor(255);
+    particlesVbo.disableColors();
     particlesVbo.draw(GL_POINTS, 0, (int)particles.size());
+    glPointSize(1.0f);
+    
+    ofNoFill();
+    //Draw a wire box to show the bounding box.
+//    ofPoint p(boundingBox.x/2.0f, -boundingBox.y/2, boundingBox.z/2.0f);
+//    ofDrawBox(p, boundingBox.x, boundingBox.y, boundingBox.z);
+    ofFill();
+}
+
+void SPHFluid::setPosAsColor(bool allow) {
+    if(allow) particlesVbo.enableColors();
+    else particlesVbo.disableColors();
+    
 }

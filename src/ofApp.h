@@ -23,4 +23,6 @@ public:
 		
     SPHFluid fluid;
     ofEasyCam camera;
+    bool paused = false;
+    bool posAsColor = true;
 };
