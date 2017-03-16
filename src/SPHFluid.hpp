@@ -22,7 +22,7 @@ public:
     density restDensity = SPHParticle::mass / hRaise3;
     float stiffnessConstant = 5.0f;
     static ofVec3f gravity;
-    float viscosityConstant;
+    float viscosityConstant = 0.894f;
     
     //--------------------------------------------
     //MARK: Draw fns.
