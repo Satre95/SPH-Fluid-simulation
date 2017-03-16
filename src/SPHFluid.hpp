@@ -10,7 +10,7 @@ public:
     //MARK: - Public Methods -
     //--------------------------------------------
 
-	SPHFluid(int numParticles = 1000);
+	SPHFluid(int numParticles = 729);
     int numParticles;
     const float binSize = SPHParticle::smoothingRadius;
     const int numBins = 10000;

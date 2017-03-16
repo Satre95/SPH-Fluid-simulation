@@ -14,14 +14,11 @@ public:
 	SpatialHashTable(float binSize, int numBins);
 
     void insert(ofVec3f position, T value);
-	void remove(ofVec3f position, T value);
+	void remove(ofVec3f position, const T & value);
     bool exists(ofVec3f position);
     
     ///Ascertains whether the two positions hash to the same bin.
     bool compareKeyHashes(ofVec3f pos1, ofVec3f pos2);
-    
-    ///Function to iterate over all bins and process the data inside them.
-//    void processDataInBuckets(const std::function< void( std::list<T> )> f);
     
     ///Function to return the bins represent the spaces near the given position, if any
     std::vector<std::reference_wrapper<std::list<T>>> getNeighboringBuckets(ofVec3f pos);
@@ -70,7 +67,7 @@ void SpatialHashTable<T>::insert(ofVec3f position, T value) {
 }
 
 template <typename T>
-void SpatialHashTable<T>::remove(ofVec3f position, T value) {
+void SpatialHashTable<T>::remove(ofVec3f position, const T & anItem) {
 	//Get the hash key for the given position
 	HashKey key = hashPosition(position);
 
@@ -82,7 +79,7 @@ void SpatialHashTable<T>::remove(ofVec3f position, T value) {
 	}
 
 	std::list<T> & items = bins.at(key);
-	items.remove(value);
+    items.remove_if([&](T & someVal) { return someVal == anItem; });
 }
 
 template<typename T>
@@ -98,13 +95,6 @@ template<typename T>
 bool SpatialHashTable<T>::compareKeyHashes(ofVec3f pos1, ofVec3f pos2) {
     return hashPosition(pos1) == hashPosition(pos2);
 }
-
-//template <typename T>
-//void SpatialHashTable<T>::processDataInBuckets(const std::function< void( std::list<T> )> f) {
-//    for(auto itr = bins.begin(); itr != bins.end(); itr++) {
-//        f(itr->second);
-//    }
-//}
 
 template <typename T>
 bool SpatialHashTable<T>::exists(ofVec3f position)

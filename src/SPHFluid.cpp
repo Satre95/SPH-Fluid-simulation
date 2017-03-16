@@ -236,7 +236,11 @@ void SPHFluid::computeForces() {
 
 //TODO: Implement fn.
 void SPHFluid::applyForces() {
-    
+    for(auto & p_i: particles) {
+        p_i.vel = p_i.vel + (float)ofGetLastFrameTime() * p_i.force / p_i.mass;
+        p_i.lastPos = p_i.pos;
+        p_i.pos = p_i.pos + (float)ofGetLastFrameTime() * p_i.vel;
+    }
 }
 
 //--------------------------------------------------

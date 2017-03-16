@@ -3,12 +3,11 @@
 #include "ofMain.h"
 typedef float pressure;
 typedef float density;
-typedef float volume;
 
 struct SPHParticle {
     SPHParticle() {
         vel = pos = lastPos = ofVec3f(0);
-        localDensity = localVolume = localPressure = 0;
+        localDensity = localPressure = 0;
     }
     
 	ofVec3f pos;
@@ -17,7 +16,6 @@ struct SPHParticle {
     ofVec3f force;
     
 	density localDensity;
-	volume localVolume;
 	pressure localPressure;
     
     static float supportRadius;
