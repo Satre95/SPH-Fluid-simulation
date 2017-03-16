@@ -11,8 +11,9 @@ public:
     //MARK: - Public Methods -
     //--------------------------------------------
 
-	SPHFluid(int numParticles = 1000);
+	SPHFluid(int num = 512);
     int numParticles;
+    int startNum;
     const float binSize = SPHParticle::smoothingRadius;
     const int numBins = 10000;
     float h = SPHParticle::smoothingRadius;
@@ -39,6 +40,7 @@ public:
     void update();
     void setPosAsColor(bool allow);
     void resetParticles();
+    void addParticles();
 
 private:
     //--------------------------------------------
@@ -58,6 +60,9 @@ private:
     
     //--------------------------------------------
     //MARK: Math fns.
+    
+    //Random point in a sphere of given radius
+    ofVec3f randomPointInSphere(float radius);
     
     ///∇ of kernel function.
     ofVec3f gradientOfKernelFn(SPHParticle & p1, SPHParticle & p2);

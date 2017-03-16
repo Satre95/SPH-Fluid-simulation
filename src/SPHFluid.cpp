@@ -11,6 +11,7 @@ SPHFluid::SPHFluid(int num) : sht(SpatialHashTable<SPHParticle*>(binSize, numBin
 {
     int particlesPerDim = std::floor(pow(num, 1.0f/3.0f));
     numParticles = pow(particlesPerDim, 3);
+    startNum = numParticles;
     cubeDims = ofVec3f(particlesPerDim * SPHParticle::smoothingRadius) * 0.5f;
     
     //Allocate the particles in a cube centered at origin.
@@ -31,13 +32,13 @@ SPHFluid::SPHFluid(int num) : sht(SpatialHashTable<SPHParticle*>(binSize, numBin
         }
     }
     
-    boundingBox = ofVec3f(1.5f * cubeDims.x, cubeDims.y * 6, 1.5f * cubeDims.z);
+    boundingBox = ofVec3f(2 * cubeDims.x, cubeDims.y * 5, 2 * cubeDims.z);
     //Call updateVBO to initalize
     updateVBO();
     
     panel.setup("Controls");
-    panel.add(stiffnessConstant.set("Stiffness Constant", 1.0f, 0.1f, 4.0f));
-    panel.add(viscosityConstant.set("Viscosity Constant", 1e-5f, 1e-6f, 1e-3f));
+    panel.add(stiffnessConstant.set("Stiffness", 1.0f, 0.1f, 4.0f));
+    panel.add(viscosityConstant.set("Viscosity", 1e-4f, 1e-4f, 1));
     panel.add(fps.set("FPS", ofGetFrameRate(), 1, 60));
 }
 
@@ -128,6 +129,20 @@ ofVec3f SPHFluid::gradientSquaredOfQuantityHelperFn(ofVec3f a_i_j, SPHParticle &
     float term4 = x_i_j.dot(x_i_j) + 0.01f * hRaise2;
     
     return term1 * a_i_j * term3 / term4;
+}
+
+ofVec3f SPHFluid::randomPointInSphere(float radius) {
+    float u = ofRandom(1);
+    float v = ofRandom(1);
+    float theta = 2.0f * PI * u;
+    float azimuth = acos(2.0f * v - 1);
+    float r = ofRandom(radius);
+    
+    float x = r * sin(azimuth) * cos(theta);
+    float y = r * sin(azimuth) * sin(azimuth);
+    float z = r * cos(azimuth);
+    
+    return ofVec3f(x, y, z);
 }
 
 //--------------------------------------------------
@@ -317,7 +332,7 @@ void SPHFluid::detectCollisions() {
 void SPHFluid::resetParticles() {
     particles.clear();
     sht.clear();
-    int particlesPerDim = (int)pow(numParticles, 1.0f/3.0f);
+    int particlesPerDim = (int)pow(startNum, 1.0f/3.0f);
     for (int z = 0; z < particlesPerDim; z++) {
         for(int y = 0; y < particlesPerDim; y++) {
             for( int x = 0; x < particlesPerDim; x++) {
@@ -334,6 +349,28 @@ void SPHFluid::resetParticles() {
             }
         }
     }
+    numParticles = startNum;
+}
+
+void SPHFluid::addParticles() {
+    int particlesPerDim = (int)pow(startNum, 1.0f/3.0f);
+    for (int z = 0; z < particlesPerDim; z++) {
+        for(int y = 0; y < particlesPerDim; y++) {
+            for( int x = 0; x < particlesPerDim; x++) {
+                SPHParticle particle;
+                float xDim = cubeDims.x * (float)x / (float)particlesPerDim;
+                float yDim = cubeDims.y * (float)y / (float)particlesPerDim;
+                float zDim = cubeDims.z * (float)z / (float)particlesPerDim;
+                particle.pos = ofVec3f(xDim, yDim, zDim);
+                particle.lastPos = particle.pos;
+                particles.push_back(particle);
+                //insert into the hash table.
+                SPHParticle * particlePtr = &particles.back();
+                sht.insert(particlePtr->pos, particlePtr);
+            }
+        }
+    }
+    numParticles += startNum;
 }
 
 //--------------------------------------------------

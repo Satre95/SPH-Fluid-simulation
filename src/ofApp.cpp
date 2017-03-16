@@ -21,11 +21,6 @@ void ofApp::update(){
 void ofApp::draw(){
     ofBackground(ofColor::black);
     
-    stringstream ss;
-    ss << "Frame render time: ";
-    ss << ofGetLastFrameTime();
-    ofDrawBitmapString(ss.str(), 10, ofGetHeight() - 30.0f);
-    
     camera.begin();
     fluid.drawParticles();
     camera.end();
@@ -48,6 +43,8 @@ void ofApp::keyReleased(int key){
     }
     else if(key == 'r')
         fluid.resetParticles();
+    else if(key == 'a')
+        fluid.addParticles();
 }
 
 //--------------------------------------------------------------
